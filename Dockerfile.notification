@@ -1,0 +1,15 @@
+FROM node:14
+
+WORKDIR /app
+
+COPY notification.js .
+COPY wait-for-it.sh .
+
+RUN chmod +x wait-for-it.sh
+
+RUN npm install express amqplib ws dotenv
+
+
+EXPOSE 9304
+
+CMD ["./wait-for-it.sh", "postgres:5432", "--timeout=30", "--", "./wait-for-it.sh", "rabbitmq:5672", "--timeout=30", "--", "./wait-for-it.sh", "user:9303", "--timeout=30", "--", "node", "notification.js"]

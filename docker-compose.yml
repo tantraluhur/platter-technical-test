@@ -1,0 +1,82 @@
+services:
+  # Service Product
+  product:
+    build:
+      context: .
+      dockerfile: Dockerfile.product
+    ports:
+      - "9301:9301"
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME_PRODUCT}
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  # Service Payment
+  payment:
+    build:
+      context: .
+      dockerfile: Dockerfile.payment
+    ports:
+      - "9302:9302"
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME_PAYMENT}
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  # Service User
+  user:
+    build:
+      context: .
+      dockerfile: Dockerfile.user
+    ports:
+      - "9303:9303"
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME_USER}
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  # Service Notification
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile.notification
+    ports:
+      - "9304:9304"
+    depends_on:
+      - rabbitmq
+      - user
+
+  # RabbitMQ Service
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "15672:15672" # RabbitMQ Management UI
+      - "5672:5672"   # RabbitMQ communication port
+
+  # PostgreSQL Database
+  postgres:
+    image: "postgres"
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init_sql.sql:/docker-entrypoint-initdb.d/init_sql.sql
+
+# Volume for PostgreSQL data storage
+volumes:
+  postgres-data:
